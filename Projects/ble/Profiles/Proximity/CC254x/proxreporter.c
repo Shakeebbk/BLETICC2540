@@ -64,10 +64,6 @@
 
 #define SERVAPP_NUM_ATTR_SUPPORTED        5
 
-//Shakeeb
-#include "OnBoard.h"
-#include "hal_key.h"
-//Shakeeb
 /*********************************************************************
  * TYPEDEFS
  */
@@ -109,10 +105,6 @@ CONST uint8 txPwrLevelUUID[ATT_BT_UUID_SIZE] =
 /*********************************************************************
  * EXTERNAL VARIABLES
  */
-//Shakeeb
-extern uint8 OnboardKeyIntEnable;
-extern uint8 registeredKeysTaskID;
-//Shakeeb
 /*********************************************************************
  * EXTERNAL FUNCTIONS
  */
@@ -550,9 +542,7 @@ static bStatus_t proxReporter_WriteAttrCB( uint16 connHandle, gattAttribute_t *p
 {
   bStatus_t status = SUCCESS;
   uint8 notify = 0xFF;
-//Shakeeb
-  keyChange_t *msgPtr;
-//Shakeeb  
+ 
   if ( pAttr->type.len == ATT_BT_UUID_SIZE )
   { 
     // 16-bit UUID
@@ -592,18 +582,8 @@ static bStatus_t proxReporter_WriteAttrCB( uint16 connHandle, gattAttribute_t *p
         break;
 
       case GATT_CLIENT_CHAR_CFG_UUID:
-        //status = GATTServApp_ProcessCCCWriteReq( connHandle, pAttr, pValue, len,
-        //                                         offset, GATT_CLIENT_CFG_NOTIFY );
-                  
-//Shakeeb
-        // Send the address to the task
-        msgPtr = (keyChange_t *)osal_msg_allocate( sizeof(keyChange_t) );
-        msgPtr->hdr.event = KEY_CHANGE;
-        msgPtr->keys = pValue[0];//HAL_KEY_SW_1;
-        msgPtr->state = (OnboardKeyIntEnable == HAL_KEY_INTERRUPT_ENABLE) ? false : ((msgPtr->keys & HAL_KEY_SW_6) ? true : false);;
-        
-        osal_msg_send( registeredKeysTaskID, (uint8 *)msgPtr );
-//Shakeeb 
+        status = GATTServApp_ProcessCCCWriteReq( connHandle, pAttr, pValue, len,
+                                                 offset, GATT_CLIENT_CFG_NOTIFY ); 
         
         break;
         

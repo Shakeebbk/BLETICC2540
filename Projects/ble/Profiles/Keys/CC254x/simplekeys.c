@@ -51,6 +51,10 @@
 
 #include "simplekeys.h"
 
+//Shakeeb
+#include "OnBoard.h"
+#include "hal_key.h"
+//Shakeeb
 /*********************************************************************
  * MACROS
  */
@@ -83,7 +87,10 @@ CONST uint8 keyPressedUUID[ATT_BT_UUID_SIZE] =
 /*********************************************************************
  * EXTERNAL VARIABLES
  */
-
+//Shakeeb
+extern uint8 OnboardKeyIntEnable;
+extern uint8 registeredKeysTaskID;
+//Shakeeb
 /*********************************************************************
  * EXTERNAL FUNCTIONS
  */
@@ -384,6 +391,9 @@ static bStatus_t sk_WriteAttrCB( uint16 connHandle, gattAttribute_t *pAttr,
                                  uint8 method )
 {
   bStatus_t status = SUCCESS;
+  //Shakeeb
+  keyChange_t *msgPtr;
+  //Shakeeb 
   
   if ( pAttr->type.len == ATT_BT_UUID_SIZE )
   {
@@ -392,8 +402,32 @@ static bStatus_t sk_WriteAttrCB( uint16 connHandle, gattAttribute_t *pAttr,
     switch ( uuid )
     {
       case GATT_CLIENT_CHAR_CFG_UUID:
-        status = GATTServApp_ProcessCCCWriteReq( connHandle, pAttr, pValue, len,
+        if(pValue[0] == 0x01) {
+          status = GATTServApp_ProcessCCCWriteReq( connHandle, pAttr, pValue, len,
                                                  offset, GATT_CLIENT_CFG_NOTIFY );
+        }
+        else if(pValue[0] == 0x02) {
+          //Shakeeb
+          // Send the address to the task
+          msgPtr = (keyChange_t *)osal_msg_allocate( sizeof(keyChange_t) );
+          msgPtr->hdr.event = KEY_CHANGE;
+          msgPtr->keys = HAL_KEY_SW_1;
+          msgPtr->state = (OnboardKeyIntEnable == HAL_KEY_INTERRUPT_ENABLE) ? false : ((msgPtr->keys & HAL_KEY_SW_6) ? true : false);;
+          
+          osal_msg_send( registeredKeysTaskID, (uint8 *)msgPtr );
+          //Shakeeb
+        }
+        else if (pValue[0] == 0x03) {
+          //Shakeeb
+          // Send the address to the task
+          msgPtr = (keyChange_t *)osal_msg_allocate( sizeof(keyChange_t) );
+          msgPtr->hdr.event = KEY_CHANGE;
+          msgPtr->keys = HAL_KEY_SW_2;
+          msgPtr->state = (OnboardKeyIntEnable == HAL_KEY_INTERRUPT_ENABLE) ? false : ((msgPtr->keys & HAL_KEY_SW_6) ? true : false);;
+          
+          osal_msg_send( registeredKeysTaskID, (uint8 *)msgPtr );
+          //Shakeeb
+        }
         
         break;       
       default:
