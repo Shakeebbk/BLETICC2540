@@ -177,8 +177,8 @@
  * EXTERNAL FUNCTIONS
  */
 //Shakeeb
-void increaseIntensity(void);
-void decreaseIntensity(void);
+extern void increaseIntensity(void);
+extern void decreaseIntensity(void);
 //Shakeeb   
 /*********************************************************************
  * LOCAL VARIABLES
@@ -388,7 +388,20 @@ void KeyFobApp_Init( uint8 task_id )
   // For keyfob board set GPIO pins into a power-optimized state
   // Note that there is still some leakage current from the buzzer,
   // accelerometer, LEDs, and buttons on the PCB.
+#ifdef CC2540_BRICK_BOARD
+  P0SEL = 0; // Configure Port 0 as GPIO
+  P1SEL = 0x40; // Configure Port 1 as GPIO, except P1.6 for peripheral function for buzzer
+  P2SEL = 0; // Configure Port 2 as GPIO
 
+  P0DIR = 0xFE; // Port 0 pins P0.0 as input (buttons),
+                // all others (P0.2-P0.7) as output
+  P1DIR = 0xFF; // All port 1 pins (P1.0-P1.7) as output
+  P2DIR = 0x1E; // Port 2 pins P2.0 as input (buttons), all port 2 pins (P2.1-P2.4) as output
+
+  P0 = 0x01; // All pins on port 0 to low except for P0.0 (buttons)
+  P1 = 0;   // All pins on port 1 to low
+  P2 = 0x01;   // All pins on port 2 to low except for P2.0 (buttons)
+#else
   P0SEL = 0; // Configure Port 0 as GPIO
   P1SEL = 0x40; // Configure Port 1 as GPIO, except P1.6 for peripheral function for buzzer
   P2SEL = 0; // Configure Port 2 as GPIO
@@ -402,7 +415,7 @@ void KeyFobApp_Init( uint8 task_id )
   P1 = 0;   // All pins on port 1 to low
   P2 = 0;   // All pins on port 2 to low
 
-
+#endif
   // initialize the ADC for battery reads
   HalAdcInit();
 
@@ -618,7 +631,9 @@ static void keyfobapp_HandleKeys( uint8 shift, uint8 keys )
   if ( keys & HAL_KEY_SW_1 )
   {
     SK_Keys |= SK_KEY_LEFT;
-
+//Shakeeb
+      increaseIntensity();
+//Shakeeb 
     // if is active, pressing the left key should toggle
     // stop the alert
     if( keyfobAlertState != ALERT_STATE_OFF )
@@ -629,10 +644,7 @@ static void keyfobapp_HandleKeys( uint8 shift, uint8 keys )
     // if device is in a connection, toggle the Tx power level between 0 and
     // -6 dBm
     if( gapProfileState == GAPROLE_CONNECTED )
-    {
-//Shakeeb
-      increaseIntensity();
-//Shakeeb      
+    {     
       int8 currentTxPowerLevel;
       int8 newTxPowerLevel;
 

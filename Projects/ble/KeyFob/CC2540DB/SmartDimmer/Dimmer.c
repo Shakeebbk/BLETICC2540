@@ -14,13 +14,31 @@ Date: 15 Oct 2015
 #include "gatt.h"
 
 #include "hci.h"
+
+#ifdef CC2540_BRICK_BOARD
+#define DATA_PORT_0 P0
+#define DATA_PIN_0 5
+#define DATA_PORT_1 P0
+#define DATA_PIN_1 4
+#define DATA_PORT_2 P0
+#define DATA_PIN_2 3
+#define DATA_PORT_3 P0
+#define DATA_PIN_3 2
+#else
+#define DATA_PORT_0 P1
+#define DATA_PIN_0 2
+#define DATA_PORT_1 P1
+#define DATA_PIN_1 4
+#define DATA_PORT_2 P1
+#define DATA_PIN_2 7
+#define DATA_PORT_3 P0
+#define DATA_PIN_3 6
+#endif
    
 static void setIntensity(char value);
 /*
 clear bit - position starts from 0
  */
-
-static int debugCount = 0;
 char clearBit(char val, int position) {
 	val &= ~(1<<position);
 	return val;
@@ -41,64 +59,61 @@ bool readBit(char val, int position) {
         return((val>>position) & 0x01);
 }
 static void setIntensity(char value) {
-	if((value < 16) && (value >=0)) {
+      if((value < 16) && (value >=0)) {
 		if(value & 0x01) {
-			P1 = setBit(P1, 2);
+			DATA_PORT_0 = setBit(DATA_PORT_0, DATA_PIN_0);
 		}
 		else {
-			P1 = clearBit(P1, 2);
+			DATA_PORT_0 = clearBit(DATA_PORT_0, DATA_PIN_0);
 		}
 		
 		if((value>>1) & 0x01) {
-			P1 = setBit(P1, 4);
+			DATA_PORT_1 = setBit(DATA_PORT_1, DATA_PIN_1);
 		}
 		else {
-			P1 = clearBit(P1, 4);
+			DATA_PORT_1 = clearBit(DATA_PORT_1, DATA_PIN_1);
 		}
 		
 		if((value>>2) & 0x01) {
-			P1 = setBit(P1, 7);
+			DATA_PORT_2 = setBit(DATA_PORT_2, DATA_PIN_2);
 		}
 		else {
-			P1 = clearBit(P1, 7);	
+			DATA_PORT_2 = clearBit(DATA_PORT_2, DATA_PIN_2);
 		}
 		
 		if((value>>3) & 0x01) {
-			P0 = setBit(P1, 6);
+			DATA_PORT_3 = setBit(DATA_PORT_3, DATA_PIN_3);
 		}
 		else {
-			P0 = clearBit(P1, 6);
+			DATA_PORT_3 = clearBit(DATA_PORT_3, DATA_PIN_3);
 		}
 	}
-        //Debug
-        //debugCount = value;  
 }
 
 char readIntensity(void) {
         char val = 0;
-        if(readBit(P1, 2)) {
+        if(readBit(DATA_PORT_0, DATA_PIN_0)) {
                 val = setBit(val, 0);
         }
-        if(readBit(P1, 4)) {
+        if(readBit(DATA_PORT_1, DATA_PIN_1)) {
                 val = setBit(val, 1);
         }
-        if(readBit(P1, 7)) {
+        if(readBit(DATA_PORT_2, DATA_PIN_2)) {
                 val = setBit(val, 2);
         }
-        if(readBit(P0, 6)) {
+        if(readBit(DATA_PORT_3, DATA_PIN_3)) {
                 val = setBit(val, 3);
         }
         return val;
-        //return debugCount;
 }
 
 void increaseIntensity(void) {
-  int level = readIntensity();
+  unsigned int level = readIntensity();
   level++;
   setIntensity(level);
 }
 void decreaseIntensity(void) {
-  int level = readIntensity();
+  unsigned int level = readIntensity();
   level--;
   setIntensity(level);
 }
